@@ -1,0 +1,64 @@
+import random
+
+POPULATION_SIZE = 100
+GENES = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890, .-;:_!\"#%&/()=?@${[]}"
+TARGET = "I love GeeksforGeeks"
+
+def random_num(start, end):
+    return random.randint(start, end)
+
+def mutated_genes():
+    return random.choice(GENES)
+
+def create_gnome():
+    return ''.join(mutated_genes() for _ in range(len(TARGET)))
+
+class Individual:
+    def _init_(self, chromosome):
+        self.chromosome = chromosome
+        self.fitness = self.cal_fitness()
+
+    def mate(self, par2):
+        child_chromosome = ''
+        for i in range(len(self.chromosome)):
+            p = random.random()
+            if p < 0.45:
+                child_chromosome += self.chromosome[i]
+            elif p < 0.90:
+                child_chromosome += par2.chromosome[i]
+            else:
+                child_chromosome += mutated_genes()
+        return Individual(child_chromosome)
+
+    def cal_fitness(self):
+        return sum(1 for c1, c2 in zip(self.chromosome, TARGET) if c1 != c2)
+
+def main():
+    generation = 0
+    population = [Individual(create_gnome()) for _ in range(POPULATION_SIZE)]
+    found = False
+
+    while not found:
+        population.sort(key=lambda x: x.fitness)
+
+        if population[0].fitness <= 0:
+            found = True
+            break
+
+        new_generation = population[:10]
+
+        for _ in range(90):
+            parent1 = random.choice(population[:50])
+            parent2 = random.choice(population[:50])
+            offspring = parent1.mate(parent2)
+            new_generation.append(offspring)
+
+        population = new_generation
+
+        print(f"Generation: {generation}\tString: {population[0].chromosome}\tFitness: {population[0].fitness}")
+        generation += 1
+
+    print(f"Generation: {generation}\tString: {population[0].chromosome}\tFitness: {population[0].fitness}")
+
+if _name_ == "_main_":
+    main()

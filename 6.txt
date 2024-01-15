@@ -1,0 +1,70 @@
+import numpy as np
+import gym
+
+# Create FrozenLake environment
+env = gym.make("FrozenLake-v1")
+
+# Get the number of observations and actions
+n_observations = env.observation_space.n
+n_actions = env.action_space.n
+
+# Initialize the Q-table to zeros
+Q_table = np.zeros((n_observations, n_actions))
+
+# Set hyperparameters
+n_episodes = 10000
+max_iter_episode = 100
+exploration_proba = 1.0
+exploration_decreasing_decay = 0.001
+min_exploration_proba = 0.01
+gamma = 0.99
+lr = 0.1
+
+# Track rewards per episode for analysis
+rewards_per_episode = []
+
+# Training loop
+for episode in range(n_episodes):
+    state = env.reset()
+    total_reward = 0
+
+    for _ in range(max_iter_episode):
+        # Exploration-exploitation trade-off
+        if np.random.rand() < exploration_proba:
+            action = env.action_space.sample()
+        else:
+            action = np.argmax(Q_table[state, :])
+
+        # Take the chosen action and observe the next state and reward
+        next_state, reward, done, _ = env.step(action)
+
+        # Update the Q-table using the Q-learning update rule
+        Q_table[state, action] = (1 - lr) * Q_table[state, action] + lr * (reward + gamma * np.max(Q_table[next_state, :]))
+
+        # Update total episode reward
+        total_reward += reward
+
+        # Move to the next state
+        state = next_state
+
+        # Check if the episode is done
+        if done:
+            break
+
+    # Decay exploration probability
+    exploration_proba = max(min_exploration_proba, exploration_proba * np.exp(-exploration_decreasing_decay))
+
+    # Store the total reward of the episode
+    rewards_per_episode.append(total_reward)
+
+    # Print mean reward every 1000 episodes
+    if (episode + 1) % 1000 == 0:
+        mean_reward = np.mean(rewards_per_episode[-1000:])
+        print(f"Mean reward after {episode + 1} episodes: {mean_reward}")
+
+# Print mean reward per thousand episodes
+for i in range(10):
+    start_idx = i * 1000
+    end_idx = (i + 1) * 1000
+    mean_reward = np.mean(rewards_per_episode[start_idx:end_idx])
+    print(f"Mean episode reward for episodes {end_idx}: {mean_reward}")
